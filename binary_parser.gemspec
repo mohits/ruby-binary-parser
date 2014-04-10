@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["rokugats(u)"]
   spec.email         = ["sasasawada@gmail.com"]
   spec.summary       = "An elegant DSL library for parsing binary-data."
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/rokugats/ruby-binary-parser"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)

@@ -218,7 +218,7 @@ And then, get structures from the stream as follows.
       stream.get_next.show(true)
     end
 
-StreamTemplateBase has many useful method to choose structures from the stream.
+StreamTemplateBase has many useful methods to choose structures from the stream.
 If you want to know detail of these methods, please read documentation or concerned source-files.
 
 
