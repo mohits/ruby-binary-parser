@@ -92,11 +92,26 @@ module BinaryParser
     end
 
     def var(name)
-      return @var[name] ||= Expression.new([name])
+      unless name_solvable?(name)
+        raise DefinitionError, "Unsolvable variable #{name} is used."
+      end
+      return Expression.new([name])
+    end
+
+    def len(name)
+      unless name_solvable?(name)
+        raise DefinitionError, "Unsolvable variable #{name} is used."
+      end
+      symbol = ("__LEN__" + name.to_s).to_sym
+      return Expression.new([symbol])
+    end
+
+    def position
+      return Expression.new([:__position])
     end
 
     def rest
-      return var(:__rest)
+      return Expression.new([:__rest])
     end
 
     def [](name)

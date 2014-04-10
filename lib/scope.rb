@@ -23,6 +23,7 @@ module BinaryParser
       raise UndefinedError, "Undefined data-name '#{name}'." unless @definition[name]
     end
 
+    # * Unsatisfactory memorized method (little obfuscated? : need refactoring?)
     def load_var(name)
       return @parent_scope.load_var(name) if !@definition[name] && @parent_scope
       check_name_defined(name)
@@ -49,6 +50,7 @@ module BinaryParser
       end
     end
 
+    # * memorized method (little obfuscated? : need refactoring?)
     def eval_bit_position(name)
       check_name_defined(name)
       return @ebs[name] ||= @definition[name].bit_position.eval do |name|
@@ -56,6 +58,7 @@ module BinaryParser
       end
     end
 
+    # * memorized method (little obfuscated? : need refactoring?)
     def eval_bit_length(name)
       check_name_defined(name)
       return @ebl[name] if @ebl[name]
@@ -63,10 +66,8 @@ module BinaryParser
         cond.eval{|name| load_var(name)}
       end
       return @ebl[name] ||= @definition[name].bit_length.eval do |var_name|
-        if var_name == :__rest
-          length = @abstract_binary.bit_length - eval_bit_position(name)
-          raise ParsingError, "Binary is too short. (So, 'rest' is failed.)" if length < 0
-          length
+        if var_name[0..1] == "__"
+          bit_length_control_variable_resolution(name, var_name)
         else
           val = load_var(var_name)
           unless val
@@ -75,6 +76,20 @@ module BinaryParser
           end
           val.to_i
         end
+      end
+    end
+
+    def bit_length_control_variable_resolution(name, var_name)
+      if var_name == :__rest
+        length = @abstract_binary.bit_length - eval_bit_position(name)
+        raise ParsingError, "Binary is too short. (So, 'rest' is failed.)" if length < 0
+        return length
+      elsif var_name == :__position
+        return eval_bit_position(name)
+      elsif var_name[0..6] == "__LEN__"
+        return eval_bit_length(var_name[7..(var_name.length - 1)].to_sym)
+      else
+        raise ProgramAssertionError, "Unknown Control-Variable '#{var_name}'."
       end
     end
     

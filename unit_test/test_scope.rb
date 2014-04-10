@@ -181,6 +181,38 @@ module BinaryParser
         end
       end
 
+      # TEST CASE STRUCTURE 6
+      # * len test
+      class ST6 < TemplateBase
+        Def do
+          data :id,           UInt,   8
+          data :whole_length, UInt,   8
+          data :rest_binary,  Binary, var(:whole_length) - len(:id) - len(:whole_length)
+        end
+      end
+
+      def test_ST6_CASE1
+        i = ST6.new(gen_bin(0, 32, 0x41, 0x42, 0x43))
+        assert_equal(16, i.rest_binary.binary_bit_length)
+        assert_equal("AB", i.rest_binary.to_s)
+      end
+
+      # TEST CASE STRUCTURE 7
+      # * position
+      class ST7 < TemplateBase
+        Def do
+          data :id,           UInt,   8
+          data :whole_length, UInt,   8
+          data :rest_binary,  Binary, var(:whole_length) - position
+        end
+      end
+
+      def test_ST7_CASE1
+        i = ST7.new(gen_bin(0, 32, 0x41, 0x42, 0x43))
+        assert_equal(16, i.rest_binary.binary_bit_length)
+        assert_equal("AB", i.rest_binary.to_s)
+      end
+
       # helpers
       def gen_bin(*chars)
         return AbstractBinary.new(chars.pack("C*"))
