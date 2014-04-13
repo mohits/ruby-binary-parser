@@ -41,7 +41,6 @@ module BinaryParser
     #   recursively => Whether print recursively or not. Default is false.
     #   out         => Print target. Default is STDOUT.
     def show(recursively=false, out=STDOUT, depth=0)
-      #out.puts " " * (depth * 2) + "*** LIST with #{size} elements ***"
       @list.each_with_index do |element, i|
         out.puts sprintf(" " * (depth * 2) + "%-5s", "[#{i}]")
         element.show(true, out, depth + 1) if recursively
