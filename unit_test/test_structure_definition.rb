@@ -83,6 +83,30 @@ module BinaryParser
         assert_equal(0, st[:dat4].conditions.size)
       end
 
+      def test_match
+        st = StructureDefinition.new do
+          data :hoge, C1, 1
+          data :fuga, C1, 1
+        end
+
+        eval_proc = Proc.new do |var_name|
+          {:hoge => 1, :fuga => 1}[var_name]
+        end
+
+        cond1 = st.match(:hoge, 1)
+        assert_equal(true, cond1.eval(&eval_proc))
+
+        cond2 = st.match(:hoge, "ABC")
+        assert_equal(false, cond2.eval(&eval_proc))
+
+        cond3 = st.match(:hoge, :fuga)
+        assert_equal(true, cond3.eval(&eval_proc))
+
+        assert_raise(DefinitionError) do
+          st.match(:hoge, Object.new)
+        end
+      end
+
       def test_VARIABLE_REFERENCE_ERROR
         assert_raise(DefinitionError) do
           st = StructureDefinition.new do

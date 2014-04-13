@@ -25,7 +25,7 @@ module BinaryParser
       @names << name
     end
 
-    def SPEND(bit_length, name, &block)
+    def SPEND(bit_length, name,  &block)
       check_new_def_name(name)
       bit_at, bit_length = process_bit_length(bit_length, name)
       used_method_names = NamelessTemplate.instance_methods + Scope.instance_methods
@@ -85,24 +85,39 @@ module BinaryParser
     end
 
     def cond(*var_names, &condition_proc)
-      unless var_names.all?{|name| name_solvable?(name)}
-        raise DefinitionError, "As condition variable, unsolvable variable #{symbol} is used."
+      var_names.each do |var_name|
+        unless name_solvable?(var_name)
+          raise DefinitionError, "As condition variable, unsolvable variable #{var_name} is used."
+        end
       end
       return Condition.new(*var_names, &condition_proc)
     end
 
-    def var(name)
-      unless name_solvable?(name)
-        raise DefinitionError, "Unsolvable variable #{name} is used."
+    def match(var_name, value)
+      case value
+      when Integer
+        return cond(var_name){|v| v.to_i == value}
+      when String
+        return cond(var_name){|v| v.to_s == value}
+      when Symbol
+        return cond(var_name, value){|v1, v2| v1.to_i == v2.to_i}
+      else
+        raise DefinitionError, "Unknown type of matching value(#{value}) '#{value.class}'."
       end
-      return Expression.new([name])
     end
 
-    def len(name)
-      unless name_solvable?(name)
-        raise DefinitionError, "Unsolvable variable #{name} is used."
+    def var(var_name)
+      unless name_solvable?(var_name)
+        raise DefinitionError, "Unsolvable variable #{var_name} is used."
       end
-      symbol = ("__LEN__" + name.to_s).to_sym
+      return Expression.new([var_name])
+    end
+
+    def len(var_name)
+      unless name_solvable?(var_name)
+        raise DefinitionError, "Unsolvable variable #{var_name} is used."
+      end
+      symbol = ("__LEN__" + var_name.to_s).to_sym
       return Expression.new([symbol])
     end
 
@@ -114,8 +129,8 @@ module BinaryParser
       return Expression.new([:__rest])
     end
 
-    def [](name)
-      return @data_def[name]
+    def [](var_name)
+      return @data_def[var_name]
     end
 
     private
