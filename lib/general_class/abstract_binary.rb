@@ -38,15 +38,10 @@ module BinaryParser
       if @bit_length == 0
         raise BadBinaryManipulationError, "Cannot convert empty binary into integer."
       end
-      res, rest_bit, char_pos = 0, @bit_length - 1, @bit_index % 8
-      @bin_str[@bit_index / 8, (@bit_length + @bit_index % 8) / 8 + 1].unpack("C*").each do |char|
-        (char_pos..7).each do |i|
-          res += char[7 - i] * (1 << rest_bit)
-          return res if (rest_bit -= 1) < 0
-        end
-        char_pos = 0
-      end
-      raise ProgramAssertionError, "Failed to convert integer value."
+      str, ml, mr = BinaryManipulateFunction.needed_sub_string(@bin_str, 
+                                                               @bit_index,
+                                                               @bit_index + @bit_length - 1)
+      return BinaryManipulateFunction.to_unsigned_int(str, ml, mr)
     end
     
     def to_chars

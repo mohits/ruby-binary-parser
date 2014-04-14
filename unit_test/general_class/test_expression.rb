@@ -6,7 +6,7 @@ module BinaryParser
     require 'test/unit'
 
     # load testing target
-    require $LIBRARY_ROOT_PATH + '/lib/general_class/expression.rb'
+    require $LIBRARY_ROOT_PATH + '/lib/binary_parser.rb'
 
     class ExpressionTest < Test::Unit::TestCase
       VAL = {:hoge => 10, :fuga => 1000}

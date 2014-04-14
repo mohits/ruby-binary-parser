@@ -7,7 +7,8 @@ module BinaryParser
   # load general class file
   GENERAL_CLASS_DIR = '/lib/general_class/'
   GENERAL_CLASS_FILES =
-    ['abstract_binary',
+    ['binary_manipulate_function.rb',
+     'abstract_binary',
      'expression.rb',
      'bit_position.rb',
      'condition.rb'

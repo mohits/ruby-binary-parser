@@ -6,7 +6,7 @@ module BinaryParser
     require 'test/unit'
 
     # load testing target
-    require $LIBRARY_ROOT_PATH + '/lib/general_class/condition.rb'
+    require $LIBRARY_ROOT_PATH + '/lib/binary_parser.rb'
 
     class ConditionTest < Test::Unit::TestCase
 

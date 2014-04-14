@@ -6,7 +6,7 @@ module BinaryParser
     require 'test/unit'
 
     # load testing target
-    require $LIBRARY_ROOT_PATH + '/lib/general_class/bit_position.rb'
+    require $LIBRARY_ROOT_PATH + '/lib/binary_parser.rb'
 
     class BitPositionTest < Test::Unit::TestCase
 
