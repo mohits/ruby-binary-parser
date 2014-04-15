@@ -2,21 +2,39 @@ module BinaryParser
   class StreamTemplateBase
     include BuiltInTemplate
 
-    def self.def_stream(byte_length, &definition_proc)
+    def self.def_stream(byte_length, buffer_num=10000, &definition_proc)
       @byte_length = byte_length
+      @buffer_size = buffer_num * byte_length
       used_method_names = NamelessTemplate.instance_methods + Scope.instance_methods
       @structure = StructureDefinition.new(used_method_names, &definition_proc)
     end
 
-    def self.Def(byte_length, &definition_proc) def_stream(byte_length, &definition_proc) end
+    def self.Def(byte_length, buffer_num=10000, &definition_proc)
+      def_stream(byte_length, buffer_num, &definition_proc)
+    end
 
-    def self.get_stream_definition
-      raise BadManipulationError, "Stream is undefined." unless @byte_length && @structure 
-      return @byte_length, @structure
+    def self.get_definition
+      raise BadManipulationError, "Structure is undefined." unless @structure 
+      return @structure
+    end
+
+    def self.get_byte_length
+      raise BadManipulationError, "Byte-length is undefined." unless @byte_length
+      return @byte_length
+    end
+
+    def self.get_buffer_size
+      raise BadManipulationError, "Buffer-size is undefined." unless @buffer_size
+      return @buffer_size
     end
 
     def initialize(binary_stream, filters=[])
-      @binary_stream = binary_stream
+      case binary_stream
+      when BufferedStream
+        @buffered_binary_stream = binary_stream
+      else
+        @buffered_binary_stream = BufferedStream.new(binary_stream, self.class.get_buffer_size)
+      end
       @filters = filters
     end
 
@@ -24,7 +42,7 @@ module BinaryParser
     # return: new instance which has filter
     def filter(&filter_proc)
       raise BadManipulationError, "Filter Proc isn't given." unless filter_proc
-      return self.class.new(@binary_stream, @filters + [filter_proc])
+      return self.class.new(@buffered_binary_stream, @filters + [filter_proc])
     end
 
     # Get next element from binary-stream.
@@ -33,24 +51,40 @@ module BinaryParser
     # Special cases:
     #   (1) If rest of binary-stream's length is 0, this method returns nil.
     #   (2) If rest of binary-stream's length is shorter than required,
-    #       this method throws BadBinaryManipulationError.
+    #       this method throws ParsingError.
     def get_next
+      return take_lookahead || filtered_simply_get_next(@filters)
+    end
+
+    def non_proceed_get_next
+      @lookahead ||= get_next
+    end
+
+    def take_lookahead
+      res, @lookahead = @lookahead, nil
+      return res
+    end
+
+    def filtered_simply_get_next(filters)
       begin
-        if @lookahead
-          scope, @lookahead = @lookahead, nil
-        else
-          byte_length, structure = self.class.get_stream_definition
-          binary = @binary_stream.read(byte_length)
-          return nil unless binary
-          if binary.length < byte_length
-            raise ParsingError, "Stream's rest binary length" + 
-              "(#{binary.length} byte) is shorter than required length (#{byte_length} byte)."
-          end
-          abstract_binary = AbstractBinary.new(binary)
-          scope = Scope.new(structure, abstract_binary)
-        end
-      end until @filters.all?{|filter| filter.call(scope)}
-      return NamelessTemplate.new(scope)
+        structure = simply_get_next
+        return nil unless structure
+      end until filters.all?{|filter| filter.call(structure)}
+      return structure
+    end
+
+    def simply_get_next
+      return nil unless binary = next_binary
+      NamelessTemplate.new(Scope.new(self.class.get_definition, AbstractBinary.new(binary)))
+    end
+
+    def next_binary
+      binary = @buffered_binary_stream.read(self.class.get_byte_length)
+      if binary && binary.length < self.class.get_byte_length
+        raise ParsingError, "Stream's rest binary length" + 
+          "(#{binary.length} byte) is shorter than required length (#{self.class.get_byte_length} byte)."
+      end
+      return binary
     end
 
     # Remove elements until finding element which fullfils proc-condition or reaching end of stream.
@@ -65,13 +99,8 @@ module BinaryParser
     def seek_top(&cond_proc)
       raise BadManipulationError, "Condition Proc isn't given." unless cond_proc
       abandoned = []
-      until @lookahead && cond_proc.call(@lookahead)
-        if @lookahead
-          abandoned << @lookahead
-          @lookahead = nil
-        end
-        return abandoned unless rest?
-        @lookahead = get_next
+      until !rest? || cond_proc.call(non_proceed_get_next)
+        abandoned << take_lookahead
       end
       return abandoned
     end
@@ -118,12 +147,12 @@ module BinaryParser
 
     # Check whether binary-stream remains or not.
     def rest?
-      return @lookahead || !@binary_stream.eof?
+      non_proceed_get_next
     end
-
+      
     # Simply close binary-stream.
     def close
-      @binary_stream.close
+      @buffered_binary_stream.close
     end
   end
 end

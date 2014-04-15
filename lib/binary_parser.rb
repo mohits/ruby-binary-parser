@@ -11,7 +11,8 @@ module BinaryParser
      'abstract_binary',
      'expression.rb',
      'bit_position.rb',
-     'condition.rb'
+     'condition.rb',
+     'buffered_stream.rb'
     ]
 
   GENERAL_CLASS_FILES.each do |path|
