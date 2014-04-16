@@ -34,5 +34,21 @@ module BinaryParser
         0 <= mr && mr <= 7,
         str.length != 1 || ml + mr <= 7 ].all?
     end
+
+    def convert_uint_into_binary(uint, bit_length)
+      if uint == 0
+        if bit_length > 0
+          convert_uint_into_binary(0, bit_length - 8) + [0].pack("C1")
+        else
+          [].pack("C0")
+        end
+      else
+        convert_uint_into_binary(uint / 256, bit_length - 8) + [uint % 256].pack("C1")
+      end
+    end
+
+    def convert_uint_into_binary_in_domain_of_definition?(uint, bit_length)
+      bit_length >= 0 && 0 <= uint && uint < 2 ** bit_length
+    end
   end
 end

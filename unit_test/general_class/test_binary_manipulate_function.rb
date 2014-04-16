@@ -28,6 +28,21 @@ module BinaryParser
         assert_equal(0b1111000011110000, tui(str, 0, 0))
       end
 
+      def test_convert_uint_into_binary
+        assert_equal([0x00],             cuib(0, 8).unpack("C*"))
+        assert_equal([0x00, 0x00],       cuib(0, 9).unpack("C*"))
+        assert_equal([0x00, 0x00, 0x00], cuib(0, 17).unpack("C*"))
+
+        assert_equal([0x01],       cuib(1, 8).unpack("C*"))
+        assert_equal([0x00, 0x01], cuib(1, 9).unpack("C*"))
+
+        assert_equal([0xff],       cuib(255, 8).unpack("C*"))
+        assert_equal([0x01, 0x00], cuib(256, 9).unpack("C*"))
+
+        assert_equal([0xff, 0xff],       cuib(0xffff, 16).unpack("C*"))
+        assert_equal([0x00, 0xff, 0xff], cuib(0xffff, 17).unpack("C*"))
+      end
+
       # helper for generating binary
       def gen_bin(*chars)
         return chars.pack("C*")
@@ -39,6 +54,10 @@ module BinaryParser
 
       def tui(*args)
         BinaryManipulateFunction.to_unsigned_int(*args)
+      end
+
+      def cuib(*args)
+        BinaryManipulateFunction.convert_uint_into_binary(*args)
       end
     end
   end

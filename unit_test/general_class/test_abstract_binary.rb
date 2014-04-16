@@ -44,15 +44,99 @@ module BinaryParser
       def test_sub_error
         abin = AbstractBinary.new(gen_bin(0b11110000, 0b11111111))
         assert_raise(BadBinaryManipulationError) do
-          abin.sub(:bit_index => 16)
+          abin.sub(:bit_index => 17)
         end
         assert_raise(BadBinaryManipulationError) do
           abin.sub(:bit_length => 17)
         end
       end
 
+      def test_alt_uint_from_binary
+        abin = AbstractBinary.new(gen_bin(0b00000000), 0, 8)
+        assert_equal(0, abin.to_i)
+        assert_equal(nil, abin.alt_uint)
+        assert_equal(nil, abin.alt_binary)
+
+        abin.alt_binary = [0b11111111].pack("C*")
+        assert_equal(0b00000000, abin.to_i)
+        assert_equal(0b11111111, abin.alt_uint)
+        assert_equal([0b11111111].pack("C*"), abin.alt_binary)
+      end
+
+      def test_alt_binary_from_uint
+        abin = AbstractBinary.new(gen_bin(0b00000000), 0, 8)
+        assert_equal(0, abin.to_i)
+        assert_equal(nil, abin.alt_uint)
+        assert_equal(nil, abin.alt_binary)
+
+        abin.alt_uint = 0xff
+        assert_equal(0b00000000, abin.to_i)
+        assert_equal(0xff, abin.alt_uint)
+        assert_equal([0b11111111].pack("C*"), abin.alt_binary)
+      end
+      
+      def test_naive_concat_CASE1
+        abin1 = AbstractBinary.new(gen_bin(0b11110000, 0b11110000), 3, 7)
+        assert_equal(0b1000011, abin1.to_i)
+
+        abin2 = AbstractBinary.new(gen_bin(0b11110000, 0b11110000), 7, 3)
+        assert_equal(0b011, abin2.to_i)
+
+        con_abin = abin1.naive_concat(abin2)
+        assert_equal(0b1000011011, con_abin.to_i)
+        assert_equal(10, con_abin.bit_length)
+      end
+        
+      def test_naive_concat_CASE2
+        abin1 = AbstractBinary.new(gen_bin(0b00000000, 0b00001111), 2, 14)
+        assert_equal(0b00000000001111, abin1.to_i)
+
+        abin2 = AbstractBinary.new(gen_bin(0b11110000), 0, 1)
+        assert_equal(0b1, abin2.to_i)
+
+        con_abin = abin1.naive_concat(abin2)
+        assert_equal(0b000000000011111, con_abin.to_i)
+        assert_equal(15, con_abin.bit_length)
+      end
+
+      def test_naive_concat_WITH_ALT_UINT
+        abin1 = AbstractBinary.new(gen_bin(0b00000000), 0, 4)
+        abin1.alt_uint = 0b0001
+        assert_equal(0, abin1.to_i)
+
+        abin2 = AbstractBinary.new(gen_bin(0b00000000), 0, 4)
+        abin2.alt_uint = 0b0001
+        assert_equal(0, abin2.to_i)
+
+        con_abin = abin1.naive_concat(abin2)
+        assert_equal(0b00010001, con_abin.to_i)
+        assert_equal(8, con_abin.bit_length)
+      end
+
+      def test_binary_concat_CASE1
+        abin1 = AbstractBinary.new(gen_bin(0b10000000), 0, 8)
+        abin2 = AbstractBinary.new(gen_bin(0b00000000), 0, 8)
+
+        con_abin = abin1.binary_concat(abin2)
+        assert_equal(0b1000000000000000, con_abin.to_i)
+        assert_equal(16, con_abin.bit_length)
+      end
+
+      def test_binary_concat_WITH_ALT_BINARY
+        abin1 = AbstractBinary.new(gen_bin(0b10000000), 0, 8)
+        abin1.alt_binary = [0b00000000].pack("C*")
+
+        abin2 = AbstractBinary.new(gen_bin(0b00000000), 0, 8)
+        abin2.alt_binary = [0b11111111].pack("C*")
+        
+        con_abin = abin1.binary_concat(abin2)
+        assert_equal(0b0000000011111111, con_abin.to_i)
+        assert_equal(16, con_abin.bit_length)
+      end
+
+
       # helper for generating binary
-      def gen_bin(*chars)
+        def gen_bin(*chars)
         return chars.pack("C*")
       end
     end
