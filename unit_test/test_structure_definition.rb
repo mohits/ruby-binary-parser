@@ -46,8 +46,8 @@ module BinaryParser
           data :dat3, C3, 8
         end
         
-        assert_equal(8,  st[:lp].structure[:dat1].bit_length.eval{})
-        assert_equal(16, st[:lp].structure[:dat2].bit_length.eval{})
+        assert_equal(8,  st[:lp].klass.structure[:dat1].bit_length.eval{})
+        assert_equal(16, st[:lp].klass.structure[:dat2].bit_length.eval{})
         assert_equal(48, st[:dat3].bit_position.eval{})
       end
 

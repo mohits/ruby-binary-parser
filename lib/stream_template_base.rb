@@ -5,17 +5,16 @@ module BinaryParser
     def self.def_stream(byte_length, buffer_num=10000, &definition_proc)
       @byte_length = byte_length
       @buffer_size = buffer_num * byte_length
-      used_method_names = NamelessTemplate.instance_methods + Scope.instance_methods
-      @structure = StructureDefinition.new(used_method_names, &definition_proc)
+      @template = NamelessTemplateMaker.new(definition_proc)
     end
 
     def self.Def(byte_length, buffer_num=10000, &definition_proc)
       def_stream(byte_length, buffer_num, &definition_proc)
     end
 
-    def self.get_definition
-      raise BadManipulationError, "Structure is undefined." unless @structure 
-      return @structure
+    def self.get_template
+      raise BadManipulationError, "Structure is undefined." unless @template
+      return @template
     end
 
     def self.get_byte_length
@@ -75,7 +74,7 @@ module BinaryParser
 
     def simply_get_next
       return nil unless binary = next_binary
-      NamelessTemplate.new(Scope.new(self.class.get_definition, AbstractBinary.new(binary)))
+      self.class.get_template.new(binary)
     end
 
     def next_binary

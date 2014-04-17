@@ -10,11 +10,6 @@ module BinaryParser
       @data, @ebs, @ebl = {}, {}, {}
     end
 
-    def method_missing(name, *args)
-      return load_var(name) if @definition[name]
-      super
-    end
-
     def names
       @definition.names.dup
     end

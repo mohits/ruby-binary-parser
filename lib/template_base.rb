@@ -2,19 +2,38 @@ module BinaryParser
   class TemplateBase
     include BuiltInTemplate
 
-    def self.def_structure(&definition_proc)
-      used_method_names = self.instance_methods + Scope.instance_methods
-      @structure_def = StructureDefinition.new(used_method_names, &definition_proc)
+    def self.def_structure(parent_structure=nil, &definition_proc)
+      @structure_def = StructureDefinition.new(instance_methods, parent_structure, &definition_proc)
+      @structure_def.names.each do |name|
+        def_var_method(name)
+      end
     end
 
-    def self.Def(&definition_proc) def_structure(&definition_proc) end
+    def self.def_var_method(name)
+      define_method(name){|&block|
+        if block
+          case block.arity
+          when 0
+            @scope.load_var(name).instance_eval(&block)
+          when 1
+            block.call(@scope.load_var(name))
+          end
+        else
+          @scope.load_var(name)
+        end
+      }
+    end
+
+    def self.Def(parent_structure=nil, &definition_proc)
+      def_structure(parent_structure, &definition_proc)
+    end
     
     def self.structure
       return @structure_def ||= StructureDefinition.new
     end
 
-    def initialize(binary)
-      @scope = Scope.new(self.class.structure, convert_into_abstract_binary(binary))
+    def initialize(binary, parent_scope=nil)
+      @scope = Scope.new(self.class.structure, convert_into_abstract_binary(binary), parent_scope)
     end
 
     def convert_into_abstract_binary(object)
@@ -25,16 +44,12 @@ module BinaryParser
       raise BadManipulationError, "Argument should be AbstractBinary or BINAY String."
     end
 
-    def method_missing(name, *args)
-      return @scope.method_missing(name, *args)
-    end
-
     def [](name)
-      return @scope.method_missing(name)
+      @scope.load_var(name)
     end
 
     def names
-      return @scope.names
+      @scope.names
     end
 
     # Convert held binary into unsigned integer.

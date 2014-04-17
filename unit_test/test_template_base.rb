@@ -53,6 +53,16 @@ module BinaryParser
         assert_equal(40, t.structure_bit_length)
       end
 
+      def test_data_method_block_call
+        t = gen(0b10000001, 0, 0, 0, 0)
+
+        assert_equal(0b1000000, t.number.to_i)
+        assert_equal(0b1000000, t.number{ to_i })
+        t.number do |n|
+          assert_equal(0b1000000, n.to_i)
+        end
+      end
+
       # helper for generating binary
       def gen(*chars)
         return TestingTemplate.new(chars.pack("C*"))

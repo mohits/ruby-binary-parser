@@ -5,12 +5,12 @@ module BinaryParser
     def initialize(definition, abstract_binary, parent_scope)
       list, rest_binary = [], abstract_binary
       while rest_binary.bit_length > 0
-        scope = Scope.new(definition.structure, rest_binary, parent_scope)
-        if scope.eval_entire_bit_length == 0
+        template = definition.klass.new(rest_binary, parent_scope)
+        if template.structure_bit_length == 0
           raise ParsingError, "0 bit-length repetition happens. This means infinite loop."
         end
-        rest_binary = rest_binary.sub(:bit_index => scope.eval_entire_bit_length)
-        list << NamelessTemplate.new(scope)
+        rest_binary = rest_binary.sub(:bit_index => template.structure_bit_length)
+        list << template
       end
       @list = list
     end

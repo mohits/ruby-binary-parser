@@ -4,13 +4,9 @@ module BinaryParser
     attr_reader :bit_length
 
     def initialize(binary_string, bit_index=nil, bit_length=nil)
-      unless binary_string.encoding == Encoding::BINARY
-        raise BadBinaryManipulationError, "binary_string's encoding should be" +
-          "ASCII_8BIT(BINARY). This is #{binary_string.encoding}."
-      end
       @bin_str = binary_string
       @bit_index = bit_index || 0
-      @bit_length = bit_length || binary_string.length * 8
+      @bit_length = bit_length || binary_string.length * 8 - @bit_index
     end
 
     def sub(spec)
@@ -45,8 +41,18 @@ module BinaryParser
 
 
     # Methods for generating modified binary.
+    def alt(binary_or_uint)
+      case binary_or_uint
+      when Integer
+        alt_uint(binary_or_uint)
+      when String
+        alt_binary(binary_or_uint)
+      else
+        raise BadManipulationError, "Argument shouled be Integer or binary-encoded String."
+      end
+    end
     
-    def alt_uint=(uint)
+    def alt_uint(uint)
       unless uint.is_a?(Integer) && uint >= 0
         raise BadManipulationError, "Specified arg #{uint} is not number of unsigned int."
       end
@@ -54,37 +60,24 @@ module BinaryParser
         raise BadBinaryManipulationError, "Specified arg #{uint} is too big to " +
           "express by #{@bit_length} bit."
       end
-      @alternative_uint = uint
+      alt_binary = BinaryManipulateFunction.convert_uint_into_binary(uint, @bit_length)
+      alt_shift = 7 - ((@bit_length - 1) % 8)
+      return self.class.new(alt_binary, alt_shift)
     end
 
-    def alt_uint
-      @alternative_uint ||= @alternative_binary && self.class.new(@alternative_binary).to_i
-    end
-
-    def alt_binary=(binary)
+    def alt_binary(binary)
       unless binary.length * 8 == @bit_length
         raise BadBinaryManipulationError, "Given binary'length doesn't match self."
       end
-      @alternative_binary = binary
-    end
-
-    def alt_binary
-      unless @bit_length % 8 == 0
-        raise BadBinaryManipulationError, "Cannot use alt_binary on this binary." +
-          "Because this binary's bit-length is #{@bit_length}, non-byte-length."
-      end
-      @alternative_binary ||= @alternative_uint &&
-        BinaryManipulateFunction.convert_uint_into_binary(@alternative_uint, @bit_length)
+      return self.class.new(binary)
     end
 
     def naive_concat(other)
-      left_uint = self.alt_uint || self.to_i
       left_shift = 7 - ((self.bit_length - 1) % 8)
-      left_binary  = BinaryManipulateFunction.convert_uint_into_binary(left_uint, self.bit_length)
+      left_binary  = BinaryManipulateFunction.convert_uint_into_binary(self.to_i, self.bit_length)
       
-      right_uint = other.alt_uint || other.to_i
       right_shift = 7 - ((other.bit_length - 1) % 8)
-      right_binary = BinaryManipulateFunction.convert_uint_into_binary(right_uint << right_shift,
+      right_binary = BinaryManipulateFunction.convert_uint_into_binary(other.to_i << right_shift,
                                                                        other.bit_length)
 
       return self.class.new(left_binary + right_binary,
@@ -93,9 +86,7 @@ module BinaryParser
     end
 
     def binary_concat(other)
-      left  = self.alt_binary  || self.to_s
-      right = other.alt_binary || other.to_s
-      return self.class.new(left + right)
+      self.class.new(self.to_s + other.to_s)
     end
 
     def +(other)

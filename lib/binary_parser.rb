@@ -42,7 +42,7 @@ module BinaryParser
      'structure_definition.rb',
      'template_base.rb',
      'stream_template_base.rb',
-     'nameless_template.rb',
+     'nameless_template_maker.rb',
      'error.rb'
     ]
 

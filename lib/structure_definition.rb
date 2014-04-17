@@ -2,7 +2,7 @@ module BinaryParser
   class StructureDefinition
     
     DataDefinition  = Struct.new(:bit_position, :bit_length, :conditions, :klass)
-    LoopDefinition  = Struct.new(:bit_position, :bit_length, :conditions, :structure)
+    LoopDefinition  = Struct.new(:bit_position, :bit_length, :conditions, :klass)
 
     attr_reader :parent_structure, :bit_at, :names
 
@@ -25,21 +25,21 @@ module BinaryParser
       @names << name
     end
 
-    def SPEND(bit_length, name,  &block)
+    def SPEND(bit_length, name, &block)
       check_new_def_name(name)
       bit_at, bit_length = process_bit_length(bit_length, name)
-      used_method_names = NamelessTemplate.instance_methods + Scope.instance_methods
-      structure = StructureDefinition.new(used_method_names, self, &block)
-      @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, structure)
+      klass = NamelessTemplateMaker.new(self, block)
+      @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass)
       @names << name
     end
 
     def TIMES(times, name, &block)
       check_new_def_name(name)
-      structure = StructureDefinition.new(Scope.instance_methods, self, &block)
+      klass = NamelessTemplateMaker.new(self, block)
+      structure = klass.structure
       if structure.bit_at.names.empty?
         bit_at, bit_length = process_bit_length(times * structure.bit_at.imm, name)
-        @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, structure)
+        @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass)
       else
         bit_length = Expression.new([0])
         structure.bit_at.names.each do |bit_at_depending_name|
@@ -54,7 +54,7 @@ module BinaryParser
           bit_length += depending_length_exp
         end
         bit_at, bit_length = process_bit_length(bit_length * times, name)
-        @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, structure)
+        @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass)
       end
       @names << name
     end
