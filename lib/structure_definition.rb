@@ -6,8 +6,8 @@ module BinaryParser
 
     attr_reader :parent_structure, :bit_at, :names
 
-    def initialize(method_names=[], parent_structure=nil, &init_proc)
-      @method_names = method_names
+    def initialize(forbidden_method_names=[], parent_structure=nil, &init_proc)
+      @forbidden_method_names = forbidden_method_names
       @parent_structure = parent_structure
       @bit_at = BitPosition.new     
       @data_def, @var = {}, {}
@@ -16,29 +16,29 @@ module BinaryParser
     end
 
     def data(name, klass, bit_length)
-      check_new_def_name(name)
+      __check_new_def_name(name)
       unless klass.ancestors.include?(TemplateBase)
         raise DefinitionError, "Class #{klass} should be TemplateBase."
       end
-      bit_at, bit_length = process_bit_length(bit_length, name)
+      bit_at, bit_length = __process_bit_length(bit_length, name)
       @data_def[name] = DataDefinition.new(bit_at, bit_length, @conditions.dup, klass)
       @names << name
     end
 
     def SPEND(bit_length, name, &block)
-      check_new_def_name(name)
-      bit_at, bit_length = process_bit_length(bit_length, name)
+      __check_new_def_name(name)
+      bit_at, bit_length = __process_bit_length(bit_length, name)
       klass = NamelessTemplateMaker.new(self, block)
       @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass)
       @names << name
     end
 
     def TIMES(times, name, &block)
-      check_new_def_name(name)
+      __check_new_def_name(name)
       klass = NamelessTemplateMaker.new(self, block)
       structure = klass.structure
       if structure.bit_at.names.empty?
-        bit_at, bit_length = process_bit_length(times * structure.bit_at.imm, name)
+        bit_at, bit_length = __process_bit_length(times * structure.bit_at.imm, name)
         @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass)
       else
         bit_length = Expression.new([0])
@@ -53,7 +53,7 @@ module BinaryParser
           end
           bit_length += depending_length_exp
         end
-        bit_at, bit_length = process_bit_length(bit_length * times, name)
+        bit_at, bit_length = __process_bit_length(bit_length * times, name)
         @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass)
       end
       @names << name
@@ -65,28 +65,9 @@ module BinaryParser
       @conditions.pop
     end
 
-    def check_new_def_name(name)
-      if name[0..1] == "__"
-        raise DefinitionError, "Name that starts with '__' is system-reserved."
-      end
-      if @method_names.include?(name)
-        raise DefinitionError, "Name '#{name}' is already used as method name." +
-          "You should chanege to other name."
-      end
-      if @data_def[name]
-        raise DefinitionError, "Name #{name} is already defined." +
-          "You should change to other name."
-      end
-    end
-
-    def name_solvable?(name, structure=self)
-      return structure[name] ||
-        (structure.parent_structure && name_solvable?(name, structure.parent_structure))
-    end
-
     def cond(*var_names, &condition_proc)
       var_names.each do |var_name|
-        unless name_solvable?(var_name)
+        unless __name_resolvable?(var_name)
           raise DefinitionError, "As condition variable, unsolvable variable #{var_name} is used."
         end
       end
@@ -107,14 +88,14 @@ module BinaryParser
     end
 
     def var(var_name)
-      unless name_solvable?(var_name)
+      unless __name_resolvable?(var_name)
         raise DefinitionError, "Unsolvable variable #{var_name} is used."
       end
       return Expression.new([var_name])
     end
 
     def len(var_name)
-      unless name_solvable?(var_name)
+      unless __name_resolvable?(var_name)
         raise DefinitionError, "Unsolvable variable #{var_name} is used."
       end
       symbol = ("__LEN__" + var_name.to_s).to_sym
@@ -135,7 +116,7 @@ module BinaryParser
 
     private
 
-    def process_bit_length(bit_length, name)
+    def __process_bit_length(bit_length, name)
       bit_at = @bit_at
       case bit_length
       when Integer
@@ -147,7 +128,7 @@ module BinaryParser
         return bit_at, Expression.new([bit_length])
       when Expression
         bit_length.variables.reject{|s| s[0..1] == "__"}.each do |symbol|
-          unless name_solvable?(symbol)
+          unless __name_resolvable?(symbol)
             raise DefinitionError, "In #{name}, unsolvable variable #{symbol} is used."
           end
         end
@@ -156,6 +137,25 @@ module BinaryParser
       else
         raise DefinitionError, "Unknown type of bit_length (#{bit_length.class})."
       end
+    end
+
+    def __check_new_def_name(name)
+      if name[0..1] == "__"
+        raise DefinitionError, "Name that starts with '__' is system-reserved."
+      end
+      if @forbidden_method_names.include?(name)
+        raise DefinitionError, "Name '#{name}' is already used as method name." +
+          "You should chanege to other name."
+      end
+      if @data_def[name]
+        raise DefinitionError, "Name #{name} is already defined." +
+          "You should change to other name."
+      end
+    end
+
+    def __name_resolvable?(name, structure=self)
+      return structure[name] ||
+        (structure.parent_structure && __name_resolvable?(name, structure.parent_structure))
     end
   end
 end

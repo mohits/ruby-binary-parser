@@ -10,18 +10,7 @@ module BinaryParser
     end
 
     def self.def_var_method(name)
-      define_method(name){|&block|
-        if block
-          case block.arity
-          when 0
-            @scope.load_var(name).instance_eval(&block)
-          when 1
-            block.call(@scope.load_var(name))
-          end
-        else
-          @scope.load_var(name)
-        end
-      }
+      define_method(name){|&block| load(name, &block) }
     end
 
     def self.Def(parent_structure=nil, &definition_proc)
@@ -34,6 +23,19 @@ module BinaryParser
 
     def initialize(binary, parent_scope=nil)
       @scope = Scope.new(self.class.structure, convert_into_abstract_binary(binary), parent_scope)
+    end
+
+    def load(name, &block)
+      if block
+        case block.arity
+        when 0
+          @scope.load_var(name).instance_eval(&block)
+        when 1
+          block.call(@scope.load_var(name))
+        end
+      else
+        @scope.load_var(name)
+      end
     end
 
     def convert_into_abstract_binary(object)
