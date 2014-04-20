@@ -8,7 +8,7 @@ module BinaryParser
     # load testing target
     require $LIBRARY_ROOT_PATH + '/lib/binary_parser.rb'
     
-    class BinaryTemplateTest < Test::Unit::TestCase
+    class UIntTemplateTest < Test::Unit::TestCase
       
       class TestingTemplate < TemplateBase
         def_structure do
