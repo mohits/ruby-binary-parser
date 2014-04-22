@@ -28,11 +28,11 @@ module BinaryParser
 
         assert_equal(C2, st[:b].klass)
         assert_equal(3,  st[:b].bit_position.eval{})
-        assert_equal(24, st[:b].bit_length.eval{|name| {:a => 3}[name]})
+        assert_equal(24, st[:b].bit_length.eval{|token| {:a => 3}[token.symbol]})
         assert_equal([], st[:b].conditions)
 
         assert_equal(C3, st[:c].klass)
-        assert_equal(27, st[:c].bit_position.eval{|name| {:b => 24}[name]})
+        assert_equal(27, st[:c].bit_position.eval{|symbol| {:b => 24}[symbol]})
         assert_equal(4,  st[:c].bit_length.eval{})
         assert_equal([], st[:c].conditions)
       end
@@ -61,7 +61,7 @@ module BinaryParser
         end
         
         assert_equal(8,  st[:list].bit_position.eval{})
-        assert_equal(12, st[:list].bit_length.eval{|name| {:outer => 3}[name]})
+        assert_equal(12, st[:list].bit_length.eval{|token| {:outer => 3}[token.symbol]})
         assert_equal(20, st[:foot].bit_position.eval{|name| {:list => 12}[name]})
       end
 
@@ -167,7 +167,7 @@ module BinaryParser
 
         assert_equal(C2, st[:b].klass)
         assert_equal(3,  st[:b].bit_position.eval{})
-        assert_equal(24, st[:b].bit_length.eval{|name| {:a => 3}[name]})
+        assert_equal(24, st[:b].bit_length.eval{|token| {:a => 3}[token.symbol]})
         assert_equal([], st[:b].conditions)
 
         assert_equal(C3, st[:c].klass)

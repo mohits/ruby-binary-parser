@@ -47,12 +47,12 @@ module BinaryParser
         bit_at, bit_length = __process_bit_length(times * structure.bit_at.imm, name)
         @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass)
       else
-        bit_length = Expression.new([0])
+        bit_length = Expression.immediate(0)
         structure.bit_at.names.each do |bit_at_depending_name|
           depending_length_exp = structure[bit_at_depending_name].bit_length
-          depending_length_exp.variables.each do |var_name|
-            if structure[var_name]
-              raise DefinitionError, "In '#{name}', same level variable #{var_name} is referenced." + 
+          depending_length_exp.variable_tokens.each do |token|
+            if structure[token.symbol]
+              raise DefinitionError, "In '#{name}', same level variable #{token.symbol} is referenced." + 
                 "*** TIMES's inner structure's bit-length must be always same." +
                 "In other words, that bit-length must not rely on same level variables. ***"
             end
@@ -101,23 +101,22 @@ module BinaryParser
       unless __name_resolvable?(var_name)
         raise DefinitionError, "Unsolvable variable #{var_name} is used."
       end
-      return Expression.new([var_name])
+      return Expression.value_var(var_name)
     end
 
     def len(var_name)
       unless __name_resolvable?(var_name)
         raise DefinitionError, "Unsolvable variable #{var_name} is used."
       end
-      symbol = ("__LEN__" + var_name.to_s).to_sym
-      return Expression.new([symbol])
+      return Expression.length_var(var_name)
     end
 
     def position
-      return Expression.new([:__position])
+      Expression.control_var(:position)
     end
 
     def rest
-      return Expression.new([:__rest])
+      Expression.control_var(:rest)
     end
 
     def [](var_name)
@@ -145,9 +144,10 @@ module BinaryParser
         else
           @bit_at = @bit_at.add_name(name)
         end
-        return bit_at, Expression.new([bit_length])
+        return bit_at, Expression.immediate(bit_length)
       when Expression
-        bit_length.variables.reject{|s| s[0..1] == "__"}.each do |symbol|
+        bit_length.variable_tokens.reject{|token| token.control_var?}.each do |token|
+          symbol = token.symbol
           unless __name_resolvable?(symbol)
             raise DefinitionError, "In #{name}, unsolvable variable #{symbol} is used."
           end
