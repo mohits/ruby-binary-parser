@@ -134,6 +134,47 @@ module BinaryParser
           end
         end
       end
+
+      def test_E
+        st = StructureDefinition.new do
+          IF E{ hoge == 1 } do
+            data :fuga, C1, 8
+          end
+        end
+        
+        assert_equal(true, st[:fuga].conditions[0].eval{|v| {:hoge => 1}[v]})
+      end
+
+      def test_ABBREVIATED_NOTATION
+        st = StructureDefinition.new do
+          d2 C2, 8
+        end
+
+        assert_equal(8, st[:d2].bit_length.eval{})
+      end
+
+      def test_VARIABLE_RESOLUTION
+        st = StructureDefinition.new do
+          data :a, C1, 3
+          data :b, C2, a * 8
+          data :c, C3, 4
+        end
+
+        assert_equal(C1, st[:a].klass)
+        assert_equal(0,  st[:a].bit_position.eval{})
+        assert_equal(3,  st[:a].bit_length.eval{})
+        assert_equal([], st[:a].conditions)
+
+        assert_equal(C2, st[:b].klass)
+        assert_equal(3,  st[:b].bit_position.eval{})
+        assert_equal(24, st[:b].bit_length.eval{|name| {:a => 3}[name]})
+        assert_equal([], st[:b].conditions)
+
+        assert_equal(C3, st[:c].klass)
+        assert_equal(27, st[:c].bit_position.eval{|name| {:b => 24}[name]})
+        assert_equal(4,  st[:c].bit_length.eval{})
+        assert_equal([], st[:c].conditions)
+      end
     end
   end
 end

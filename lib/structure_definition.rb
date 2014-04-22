@@ -4,15 +4,21 @@ module BinaryParser
     DataDefinition  = Struct.new(:bit_position, :bit_length, :conditions, :klass)
     LoopDefinition  = Struct.new(:bit_position, :bit_length, :conditions, :klass)
 
-    attr_reader :parent_structure, :bit_at, :names
 
+    KEYWORDS = 
+      [
+       :data, :SPEND, :TIMES, :IF, :E, :cond, :match, :var, :len, :position, :rest, :[]
+      ]
+
+    attr_reader :parent_structure, :bit_at, :names
+    
     def initialize(forbidden_method_names=[], parent_structure=nil, &init_proc)
       @forbidden_method_names = forbidden_method_names
       @parent_structure = parent_structure
       @bit_at = BitPosition.new     
       @data_def, @var = {}, {}
       @conditions, @names = [], []
-      instance_eval(&init_proc) if init_proc
+      Proxy.new(self, KEYWORDS).instance_eval(&init_proc) if init_proc
     end
 
     def data(name, klass, bit_length)
@@ -74,6 +80,10 @@ module BinaryParser
       return Condition.new(*var_names, &condition_proc)
     end
 
+    def E(&condition_proc)
+      return FreeCondition.new(&condition_proc)
+    end
+
     def match(var_name, value)
       case value
       when Integer
@@ -112,6 +122,16 @@ module BinaryParser
 
     def [](var_name)
       return @data_def[var_name]
+    end
+
+    def symbol_call(var_name, *args, &block)
+      if args.length == 0
+        return var(var_name)
+      elsif args.length == 2
+        return data(var_name, *args)
+      else
+        raise DefinitionError, "Unknown use of keyword '#{var_name}' with args(#{args})."
+      end
     end
 
     private

@@ -12,7 +12,9 @@ module BinaryParser
      'expression.rb',
      'bit_position.rb',
      'condition.rb',
-     'buffered_stream.rb'
+     'free_condition.rb',
+     'buffered_stream.rb',
+     'proxy.rb'
     ]
 
   GENERAL_CLASS_FILES.each do |path|
