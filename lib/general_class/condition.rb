@@ -1,11 +1,12 @@
 module BinaryParser
   class Condition
     def initialize(*var_names, &condition_proc)
-      @var_names, @condition_proc = var_names, condition_proc
+      @tokens = var_names.map{|symbol| Expression.value_var(symbol)}
+      @condition_proc = condition_proc
     end
 
-    def eval(&name_eval_proc)
-      return @condition_proc.call(*@var_names.map{|name| name_eval_proc.call(name)})
+    def eval(&token_eval_proc)
+      return @condition_proc.call(*@tokens.map{|token| token_eval_proc.call(token)})
     end
   end
 end

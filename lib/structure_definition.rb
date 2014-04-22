@@ -3,11 +3,12 @@ module BinaryParser
     
     DataDefinition  = Struct.new(:bit_position, :bit_length, :conditions, :klass)
     LoopDefinition  = Struct.new(:bit_position, :bit_length, :conditions, :klass)
-
+    WhileDefinition = Struct.new(:bit_position, :bit_length, :conditions, :klass, :loop_condition)
 
     KEYWORDS = 
       [
-       :data, :SPEND, :TIMES, :IF, :E, :cond, :match, :var, :len, :position, :rest, :[]
+       :data, :SPEND, :TIMES, :WHILE, :IF, :E, :cond, :match, :var, :len, :nextbits, :position,
+       :rest, :[]
       ]
 
     attr_reader :parent_structure, :bit_at, :names
@@ -16,7 +17,7 @@ module BinaryParser
       @forbidden_method_names = forbidden_method_names
       @parent_structure = parent_structure
       @bit_at = BitPosition.new     
-      @data_def, @var = {}, {}
+      @data_def = {}
       @conditions, @names = [], []
       Proxy.new(self, KEYWORDS).instance_eval(&init_proc) if init_proc
     end
@@ -27,16 +28,14 @@ module BinaryParser
         raise DefinitionError, "Class #{klass} should be TemplateBase."
       end
       bit_at, bit_length = __process_bit_length(bit_length, name)
-      @data_def[name] = DataDefinition.new(bit_at, bit_length, @conditions.dup, klass)
-      @names << name
+      define(name, DataDefinition.new(bit_at, bit_length, @conditions.dup, klass))
     end
 
     def SPEND(bit_length, name, &block)
       __check_new_def_name(name)
       bit_at, bit_length = __process_bit_length(bit_length, name)
       klass = NamelessTemplateMaker.new(self, block)
-      @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass)
-      @names << name
+      define(name, LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass))
     end
 
     def TIMES(times, name, &block)
@@ -45,11 +44,11 @@ module BinaryParser
       structure = klass.structure
       if structure.bit_at.names.empty?
         bit_at, bit_length = __process_bit_length(times * structure.bit_at.imm, name)
-        @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass)
+        define(name, LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass))
       else
         bit_length = Expression.immediate(0)
-        structure.bit_at.names.each do |bit_at_depending_name|
-          depending_length_exp = structure[bit_at_depending_name].bit_length
+        structure.bit_at.names.each do |depending_token|
+          depending_length_exp = structure[depending_token.symbol].bit_length
           depending_length_exp.variable_tokens.each do |token|
             if structure[token.symbol]
               raise DefinitionError, "In '#{name}', same level variable #{token.symbol} is referenced." + 
@@ -60,11 +59,22 @@ module BinaryParser
           bit_length += depending_length_exp
         end
         bit_at, bit_length = __process_bit_length(bit_length * times, name)
-        @data_def[name] = LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass)
+        define(name, LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass))
       end
+    end
+
+    def define(name, data)
+      @data_def[name] = data
       @names << name
     end
 
+    def WHILE(condition, name, &block)
+      __check_new_def_name(name)
+      klass = NamelessTemplateMaker.new(self, block)
+      bit_at, bit_length = __process_bit_length(Expression.control_var(:non_fixed), name)
+      define(name, WhileDefinition.new(bit_at, bit_length, @conditions.dup, klass, condition))
+    end
+      
     def IF(condition, &block)
       @conditions.push(condition)
       block.call
@@ -111,6 +121,10 @@ module BinaryParser
       return Expression.length_var(var_name)
     end
 
+    def nextbits(length)
+      return Expression.nextbits_var(length)
+    end
+
     def position
       Expression.control_var(:position)
     end
@@ -123,11 +137,11 @@ module BinaryParser
       return @data_def[var_name]
     end
 
-    def symbol_call(var_name, *args, &block)
+    def symbol_call(symbol, *args, &block)
       if args.length == 0
-        return var(var_name)
+        return var(symbol)
       elsif args.length == 2
-        return data(var_name, *args)
+        return data(symbol, *args)
       else
         raise DefinitionError, "Unknown use of keyword '#{var_name}' with args(#{args})."
       end
@@ -146,9 +160,8 @@ module BinaryParser
         end
         return bit_at, Expression.immediate(bit_length)
       when Expression
-        bit_length.variable_tokens.reject{|token| token.control_var?}.each do |token|
-          symbol = token.symbol
-          unless __name_resolvable?(symbol)
+        bit_length.variable_tokens.each do |token|
+          if (token.value_var? || token.length_var?) && !__name_resolvable?(token.symbol)
             raise DefinitionError, "In #{name}, unsolvable variable #{symbol} is used."
           end
         end

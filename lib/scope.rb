@@ -1,5 +1,6 @@
 module BinaryParser
   class Scope
+    include Memorize.one_arg_method(:load_var, :eval_bit_position, :eval_bit_length)
 
     attr_reader :abstract_binary
 
@@ -18,7 +19,6 @@ module BinaryParser
       raise UndefinedError, "Undefined data-name '#{name}'." unless @definition[name]
     end
 
-    # * Unsatisfactory memorized method (little obfuscated? : need refactoring?)
     def load_var(name)
       return @parent_scope.load_var(name) if !@definition[name] && @parent_scope
       check_name_defined(name)
@@ -27,6 +27,9 @@ module BinaryParser
         eval_bit_length(name) == 0 ? nil : @definition[name].klass.new(load_binary(name))
       when StructureDefinition::LoopDefinition
         LoopList.new(@definition[name], load_binary(name), self)
+      when StructureDefinition::WhileDefinition
+        sub_binary = @abstract_binary.sub(:bit_index => eval_bit_position(name))
+        WhileList.new(@definition[name], sub_binary, self, name)
       else
         raise ProgramAssertionError, "Unknown definition-class '#{@definition[name].class}'."
       end
@@ -44,40 +47,50 @@ module BinaryParser
       end
     end
 
-    # * memorized method (little obfuscated? : need refactoring?)
+    def preview_as_integer(start_pos, length)
+      sub_binary = @abstract_binary.sub(:bit_index => start_pos, :bit_length => length)
+      TemplateBase.new(sub_binary).to_i
+    end
+
     def eval_bit_position(name)
       check_name_defined(name)
-      return @definition[name].bit_position.eval do |name|
-        eval_bit_length(name)
-      end
+      return eval(@definition[name].bit_position, nil)
     end
 
-    # * memorized method (little obfuscated? : need refactoring?)
     def eval_bit_length(name)
       check_name_defined(name)
-      unless @definition[name].conditions.all?{|cond| cond.eval{|name| load_var(name)}}
+      unless @definition[name].conditions.all?{|cond| eval(cond, name)}
         return 0
       end
-      return eval(name, @definition[name].bit_length)
+      return eval(@definition[name].bit_length, name)
+    end
+  
+    def eval_entire_bit_length
+      eval(@definition.bit_at, nil)
     end
 
-    def eval(name, target)
+    def eval(target, name)
       target.eval do |token|
-        if token.control_var?
-          bit_length_control_variable_resolution(name, token.symbol)
-        elsif token.length_var?
-          eval_bit_length(token.symbol)
-        elsif token.value_var?
-          val = load_var(token.symbol)
-          unless val
-            raise ParsingError, "Variable '#{token.symbol}' assigned  to Nil is referenced" +
-              "at the time of resolving bit_length of '#{name}'."
-          end
-          val.to_i
-        end
+        token_eval(token, name)
       end
     end
 
+    def token_eval(token, name)
+      if token.control_var?
+        bit_length_control_variable_resolution(name, token.symbol)
+      elsif token.nextbits_var?
+        preview_as_integer(eval_bit_position(name), token.length)
+      elsif token.length_var?
+        eval_bit_length(token.symbol)
+      elsif token.value_var?
+        unless val = load_var(token.symbol)
+          raise ParsingError, "Variable '#{token.symbol}' assigned  to Nil is referenced" +
+            "at the time of resolving bit_length of '#{name}'."
+        end
+        val.to_i
+      end
+    end
+    
     def bit_length_control_variable_resolution(name, symbol)
       if symbol == :rest
         length = @abstract_binary.bit_length - eval_bit_position(name)
@@ -85,14 +98,10 @@ module BinaryParser
         return length
       elsif symbol == :position
         return eval_bit_position(name)
+      elsif symbol == :non_fixed
+        return load_var(name).bit_length
       else
         raise ProgramAssertionError, "Unknown Control-Variable '#{symbol}'."
-      end
-    end
-    
-    def eval_entire_bit_length
-      return @definition.bit_at.eval do |name|
-        eval_bit_length(name)
       end
     end
   end

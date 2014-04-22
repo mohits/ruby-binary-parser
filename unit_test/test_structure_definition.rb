@@ -32,7 +32,7 @@ module BinaryParser
         assert_equal([], st[:b].conditions)
 
         assert_equal(C3, st[:c].klass)
-        assert_equal(27, st[:c].bit_position.eval{|symbol| {:b => 24}[symbol]})
+        assert_equal(27, st[:c].bit_position.eval{|token| {:b => 24}[token.symbol]})
         assert_equal(4,  st[:c].bit_length.eval{})
         assert_equal([], st[:c].conditions)
       end
@@ -62,7 +62,7 @@ module BinaryParser
         
         assert_equal(8,  st[:list].bit_position.eval{})
         assert_equal(12, st[:list].bit_length.eval{|token| {:outer => 3}[token.symbol]})
-        assert_equal(20, st[:foot].bit_position.eval{|name| {:list => 12}[name]})
+        assert_equal(20, st[:foot].bit_position.eval{|token| {:list => 12}[token.symbol]})
       end
 
       def test_IF
@@ -89,8 +89,8 @@ module BinaryParser
           data :fuga, C1, 1
         end
 
-        eval_proc = Proc.new do |var_name|
-          {:hoge => 1, :fuga => 1}[var_name]
+        eval_proc = Proc.new do |token|
+          {:hoge => 1, :fuga => 1}[token.symbol]
         end
 
         cond1 = st.match(:hoge, 1)
@@ -142,7 +142,7 @@ module BinaryParser
           end
         end
         
-        assert_equal(true, st[:fuga].conditions[0].eval{|v| {:hoge => 1}[v]})
+        assert_equal(true, st[:fuga].conditions[0].eval{|token| {:hoge => 1}[token.symbol]})
       end
 
       def test_ABBREVIATED_NOTATION
@@ -171,7 +171,7 @@ module BinaryParser
         assert_equal([], st[:b].conditions)
 
         assert_equal(C3, st[:c].klass)
-        assert_equal(27, st[:c].bit_position.eval{|name| {:b => 24}[name]})
+        assert_equal(27, st[:c].bit_position.eval{|token| {:b => 24}[token.symbol]})
         assert_equal(4,  st[:c].bit_length.eval{})
         assert_equal([], st[:c].conditions)
       end

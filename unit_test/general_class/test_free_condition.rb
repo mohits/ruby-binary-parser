@@ -12,8 +12,8 @@ module BinaryParser
 
       def test_free_condition
         cond1 = FreeCondition.new{ v1 * 100 == v2 }
-        assert_equal(true,  cond1.eval{|name| {:v1 => 1, :v2 => 100}[name]})
-        assert_equal(false, cond1.eval{|name| {:v1 => 2, :v2 => 100}[name]})
+        assert_equal(true,  cond1.eval{|token| {:v1 => 1, :v2 => 100}[token.symbol]})
+        assert_equal(false, cond1.eval{|token| {:v1 => 2, :v2 => 100}[token.symbol]})
       end
     end
   end

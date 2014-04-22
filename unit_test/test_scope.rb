@@ -213,6 +213,52 @@ module BinaryParser
         assert_equal("AB", i.rest_binary.to_s)
       end
 
+      # TEST CASE STRUCTURE 8
+      # * nextbits
+      class ST8 < TemplateBase
+        Def do
+          data :n1, UInt, nextbits(8) * 8
+          data :n2, UInt, 8
+        end
+      end
+
+      def test_ST8_CASE1
+        i = ST8.new(gen_bin(3, 0, 0, 1))
+        assert_equal(24, i.n1.binary_bit_length)
+        assert_equal(0x030000, i.n1)
+        assert_equal(1, i.n2)
+      end
+
+      # TEST CASE STRUCTURE 9
+      # * WHILE
+      class ST9 < TemplateBase
+        Def do
+          WHILE E{ nextbits(4) == 0xA }, :ls do
+            data :id, UInt, 8
+          end
+          data :suffix, UInt, 8
+        end
+      end
+
+      def test_ST9_CASE1
+        i = ST9.new(gen_bin(0xA1, 0xA2, 0xA3, 0xB4))
+
+        assert_equal(3, i.ls.length)
+        assert_equal(0xA1, i.ls[0].id)
+        assert_equal(0xA2, i.ls[1].id)
+        assert_equal(0xA3, i.ls[2].id)
+        assert_equal(0xB4, i.suffix)
+        assert_equal(4 * 8, i.structure_bit_length)
+      end
+
+      def test_ST9_CASE2
+        i = ST9.new(gen_bin(0xB0))
+
+        assert_equal(0, i.ls.length)
+        assert_equal(0xB0, i.suffix)
+        assert_equal(1 * 8, i.structure_bit_length)
+      end
+
       # helpers
       def gen_bin(*chars)
         return AbstractBinary.new(chars.pack("C*"))

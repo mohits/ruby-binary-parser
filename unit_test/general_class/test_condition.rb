@@ -15,8 +15,8 @@ module BinaryParser
       def test_condition
         cond1 = Condition.new(:hoge, :fuga){|v1, v2| v1 * 100 == v2}
         cond2 = Condition.new(:hoge, :fuga){|v1, v2| v1 * 10  == v2}
-        assert_equal(true,  cond1.eval{|name| VAL[name]})
-        assert_equal(false, cond2.eval{|name| VAL[name]})
+        assert_equal(true,  cond1.eval{|token| VAL[token.symbol]})
+        assert_equal(false, cond2.eval{|token| VAL[token.symbol]})
       end
     end
   end

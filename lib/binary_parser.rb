@@ -14,7 +14,8 @@ module BinaryParser
      'condition.rb',
      'free_condition.rb',
      'buffered_stream.rb',
-     'proxy.rb'
+     'proxy.rb',
+     'memorize.rb'
     ]
 
   GENERAL_CLASS_FILES.each do |path|
@@ -40,6 +41,7 @@ module BinaryParser
   LIB_DIR = '/lib/'
   LIB_FILES =
     ['loop_list.rb',
+     'while_list.rb',
      'scope.rb',
      'structure_definition.rb',
      'template_base.rb',

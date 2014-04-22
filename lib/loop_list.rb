@@ -31,6 +31,8 @@ module BinaryParser
       return @list.size
     end
 
+    alias_method :length, :size
+
     # String that describes this object.
     def content_description
       "list with #{size} elements"

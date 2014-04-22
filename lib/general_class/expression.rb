@@ -1,8 +1,6 @@
 module BinaryParser
   class Expression
 
-    attr_reader :rpn
-
     def self.value_var(symbol)
       Token::Variable::Value.new(symbol)
     end
@@ -13,6 +11,10 @@ module BinaryParser
 
     def self.control_var(symbol)
       Token::Variable::Control.new(symbol)
+    end
+
+    def self.nextbits_var(length)
+      Token::Variable::Nextbits.new(length)
     end
 
     def self.immediate(value)
@@ -29,6 +31,10 @@ module BinaryParser
 
     def control_var?
       self.is_a?(Token::Variable::Control)
+    end
+
+    def nextbits_var?
+      self.is_a?(Token::Variable::Nextbits)
     end
 
     def immediate?
@@ -73,16 +79,16 @@ module BinaryParser
       elsif exp.is_a?(Integer)
         Token::Immediate.new(exp)
       else
-        raise BadManipulationError, ""
+        raise BadManipulationError, "Can't convert #{exp} into Expression."
       end
     end
 
     def eval(&token_eval_proc)
-      rpn.eval(&token_eval_proc)
+      to_rpn.eval(&token_eval_proc)
     end
 
     def variable_tokens
-      rpn.tokens.select{|token| token.is_a?(Token::Variable)}
+      to_rpn.tokens.select{|token| token.is_a?(Token::Variable)}
     end
 
     def initialize(*args)
@@ -93,7 +99,6 @@ module BinaryParser
       def initialize(chl, chr, op)
         check_op(op)
         @chl, @chr, @op = to_exp(chl), to_exp(chr), op
-        @rpn = @chl.rpn + @chr.rpn + @op.rpn
       end
 
       def check_op(op)
@@ -101,11 +106,20 @@ module BinaryParser
           raise BadManipulationError, "Argument should be Token::Operator."
         end
       end
+
+      def to_rpn
+        @rpn ||= @chl.to_rpn + @chr.to_rpn + @op.to_rpn
+      end
     end
 
     class Token < self
-      def initialize(*args)
-        @rpn = RPN.new(self)
+
+      def initialize
+        #override but do nothing
+      end
+
+      def to_rpn
+        @rpn ||= RPN.new(self)
       end
 
       class Variable < self
@@ -115,12 +129,31 @@ module BinaryParser
         def initialize(symbol)
           raise BadManipulationError, "Argument should be Symbol." unless symbol.is_a?(Symbol)
           @symbol = symbol
-          super
         end
 
-        class Length < self; end
-        class Value < self; end
-        class Control < self; end
+        class Length < self
+
+        end
+
+        class Value < self
+
+        end
+
+        class Control < self
+
+        end
+
+        class Nextbits < self
+
+          attr_reader :length
+
+          def initialize(length)
+            unless length.is_a?(Integer) && length > 0
+              raise BadManipulationError, "Argument should be positive Integer."
+            end
+            @length = length
+          end
+        end
       end
 
       class Immediate < self
@@ -130,7 +163,6 @@ module BinaryParser
         def initialize(value)
           raise BadManipulationError, "Argument should be Integer." unless value.is_a?(Integer)
           @value = value
-          super
         end
       end
 
@@ -138,10 +170,6 @@ module BinaryParser
 
         require 'singleton'
         include Singleton
-
-        def initialize
-          @rpn = RPN.new(self)
-        end
 
         class Add < self
           def operate(op1, op2)

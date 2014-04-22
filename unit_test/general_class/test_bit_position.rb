@@ -14,7 +14,7 @@ module BinaryParser
 
       def test_bit_position
         bp = BitPosition.new
-        pos = bp.add_imm(4).add_name(:hoge).add_imm(3).add_name(:fuga).eval{|name| VAL[name]}
+        pos = bp.add_imm(4).add_name(:hoge).add_imm(3).add_name(:fuga).eval{|token| VAL[token.symbol]}
         assert_equal(1017, pos)
       end
     end

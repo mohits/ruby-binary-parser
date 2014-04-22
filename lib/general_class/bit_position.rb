@@ -12,7 +12,7 @@ module BinaryParser
     end
 
     def add_name(name)
-      return BitPosition.new(@imm, @names + [name])
+      return BitPosition.new(@imm, @names + [Expression.length_var(name)])
     end
 
     def eval(&name_eval_block)
