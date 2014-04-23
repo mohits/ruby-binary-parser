@@ -20,7 +20,6 @@ module BinaryParser
           @memo[method_name] ||= Hash.new
           @memo[method_name][arg] ||= send(pure_method_name, arg)
         end
-        puts "#{method_name} is memorized!"
       end
     end
 
