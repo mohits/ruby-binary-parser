@@ -8,7 +8,6 @@ module BinaryParser
       @definition = structure_definition
       @abstract_binary = abstract_binary
       @parent_scope = parent_scope
-      @data, @ebs, @ebl = {}, {}, {}
     end
 
     def names
@@ -85,7 +84,7 @@ module BinaryParser
       elsif token.value_var?
         unless val = load_var(token.symbol)
           raise ParsingError, "Variable '#{token.symbol}' assigned  to Nil is referenced" +
-            "at the time of resolving bit_length of '#{name}'."
+            "at the time of resolving '#{name}'."
         end
         val.to_i
       end
