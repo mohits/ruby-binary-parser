@@ -7,10 +7,10 @@ require 'binary_parser/version'
 Gem::Specification.new do |spec|
   spec.name          = "binary_parser"
   spec.version       = BinaryParser::VERSION
-  spec.authors       = ["rokugats(u)"]
+  spec.authors       = ["sawaken"]
   spec.email         = ["sasasawada@gmail.com"]
   spec.summary       = "An elegant DSL library for parsing binary-data."
-  spec.homepage      = "https://github.com/rokugats/ruby-binary-parser"
+  spec.homepage      = "https://github.com/sawaken/ruby-binary-parser"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
