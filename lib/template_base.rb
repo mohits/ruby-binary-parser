@@ -1,5 +1,6 @@
 module BinaryParser
   class TemplateBase
+
     include BuiltInTemplate
 
     def self.def_structure(parent_structure=nil, &definition_proc)

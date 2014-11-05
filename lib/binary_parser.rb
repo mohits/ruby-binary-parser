@@ -53,4 +53,16 @@ module BinaryParser
   LIB_FILES.each do |path|
     require LIBRARY_ROOT_PATH + LIB_DIR  + path
   end
+
+
+  # load sub-built-in template file
+  SUB_BUILT_IN_TEMPLATE_FILES =
+    [
+     'uint_n.rb',
+    ]
+
+  SUB_BUILT_IN_TEMPLATE_FILES.each do |path|
+    require LIBRARY_ROOT_PATH + BUILT_IN_TEMPLATE_DIR  + path
+  end
+
 end
