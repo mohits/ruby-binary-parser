@@ -31,16 +31,16 @@ module BinaryParser
       define(name, DataDefinition.new(bit_at, bit_length, @conditions.dup, klass))
     end
 
-    def SPEND(bit_length, name, &block)
+    def SPEND(bit_length, name, klass=nil, &block)
       __check_new_def_name(name)
       bit_at, bit_length = __process_bit_length(bit_length, name)
-      klass = NamelessTemplateMaker.new(self, block)
+      klass ||= NamelessTemplateMaker.new(self, block)
       define(name, LoopDefinition.new(bit_at, bit_length, @conditions.dup, klass))
     end
 
-    def TIMES(times, name, &block)
+    def TIMES(times, name, klass=nil, &block)
       __check_new_def_name(name)
-      klass = NamelessTemplateMaker.new(self, block)
+      klass ||= NamelessTemplateMaker.new(self, block)
       structure = klass.structure
       if structure.bit_at.names.empty?
         bit_at, bit_length = __process_bit_length(times * structure.bit_at.imm, name)

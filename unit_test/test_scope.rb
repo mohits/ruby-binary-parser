@@ -259,6 +259,44 @@ module BinaryParser
         assert_equal(1 * 8, i.structure_bit_length)
       end
 
+      # TEST CASE STRUCTURE 10
+      # * new way of SPEND and TIMES
+      class ST10 < TemplateBase
+
+        class ST10SPEND < TemplateBase
+          Def do
+            data :dat, UInt, 8
+          end
+        end
+
+        class ST10TIMES < TemplateBase
+          Def do
+            data :dat, UInt, 8
+          end
+        end
+
+        Def do
+          data :spend_size, UInt, 8
+          SPEND var(:spend_size) * 8, :spend_datas, ST10SPEND
+          data :times, UInt, 8
+          TIMES var(:times), :times_datas, ST10TIMES
+        end
+      end
+
+      def test_ST10_CASE1
+        bin = gen_bin(2, 0xaa, 0xbb, 2, 0xcc, 0xdd)
+        i = ST10.new(bin)
+
+        assert_equal(2,    i.spend_size.to_i)
+        assert_equal(0xaa, i.spend_datas[0].dat.to_i)
+        assert_equal(0xbb, i.spend_datas[1].dat.to_i)
+        assert_equal(2,    i.times.to_i)
+        assert_equal(0xcc, i.times_datas[0].dat.to_i)
+        assert_equal(0xdd, i.times_datas[1].dat.to_i)
+        assert(i.hold_just_binary?)
+      end
+
+
       # helpers
       def gen_bin(*chars)
         return AbstractBinary.new(chars.pack("C*"))
