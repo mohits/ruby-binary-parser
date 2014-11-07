@@ -211,7 +211,7 @@ i = DefExample.new([0x05, 0x01, 0xff, 0x02, 0xff, 0xff, 0x01, 0x01, 0x01, 0x01].
 i.show(true)
 ```
 
-Output for above checking-code is here.
+Output for above checking-code is shown below.
 
 ```
 *--------------------------------------------------------------------------------
