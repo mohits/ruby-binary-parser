@@ -273,6 +273,5 @@ Access shown address by web browser.
 
 Versions
 --------
-1.0.0 April    6, 2014
-
+1.0.0 April    6, 2014  
 1.2.0 November 7, 2014
