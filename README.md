@@ -204,12 +204,32 @@ class DefExample < BinaryParser::TemplateBase
 end
 ```
 
-Check this definition by giving some binary-data and calling show method as follows. 
+You can check this definition by giving some binary-data and calling show method as follows. 
 
 ```ruby
 i = DefExample.new([0x05, 0x01, 0xff, 0x02, 0xff, 0xff, 0x01, 0x01, 0x01, 0x01].pack("C*"))
 i.show(true)
 ```
+
+Output for above checking-code is here.
+
+```
+*--------------------------------------------------------------------------------
+loop_byte_length  Pos:      0  Len:      8  Type:       UInt  Cont: 5
+list              Pos:      8  Len:     40  Type:   LoopList  Cont: list with 2 elements
+  [0]
+    *--------------------------------------------------------------------------------
+    length  Pos:      0  Len:      8  Type:       UInt  Cont: 1
+    data    Pos:      8  Len:      8  Type:     Binary  Cont: [0xff]
+  [1]
+    *--------------------------------------------------------------------------------
+    length  Pos:      0  Len:      8  Type:       UInt  Cont: 2
+    data    Pos:      8  Len:     16  Type:     Binary  Cont: [0xff, 0xff]
+v1                Pos:     48  Len:      8  Type:       UInt  Cont: 1
+v2                Pos:     56  Len:      8  Type:       UInt  Cont: 1
+v3                Pos:     64  Len:     16  Type:       UInt  Cont: 257
+```
+
 
 ### Example 3  ###
 If you want to operate Stream-data, StreamTemplateBase class is useful. Define stream as follows.
