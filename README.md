@@ -102,54 +102,60 @@ Consider the following (temporary) binary structures which describe Image data.
 
 You can define MyImage structure in ruby program as following code.
 
+```ruby
+require 'binary_parser'
 
-    require 'binary_parser'
+class MyDate < BinaryParser::TemplateBase
+  require 'date'
 
-    class MyDate < BinaryParser::TemplateBase
-      require 'date'
+  Def do
+    data :year,  UInt, 13
+    data :month, UInt, 9
+    data :day,   UInt, 9
+  end
 
-      Def do
-        data :year,  UInt, 13
-        data :month, UInt, 9
-        data :day,   UInt, 9
-      end
+  def to_date
+    return Date.new(year.to_i, month.to_i, day.to_i)
+  end
+end
 
-      def to_date
-        return Date.new(year.to_i, month.to_i, day.to_i)
-      end
-    end
+class MyImage < BinaryParser::TemplateBase
+  Def do
+    data :height, UInt, 8
+    data :width,  UInt, 8
 
-    class MyImage < BinaryParser::TemplateBase
-      Def do
-        data :height, UInt, 8
-        data :width,  UInt, 8
-
-        TIMES var(:height), :i do
-          TIMES var(:width), :j do
-            data :R, UInt, 8
-            data :G, UInt, 8
-            data :B, UInt, 8
-          end
-        end
-
-        data :has_date, Flag, 1
-        IF cond(:has_date){|v| v.flagged?} do
-          data :date, MyDate, 31
-        end
+    # Loop statement
+    TIMES var(:height), :i do
+      TIMES var(:width), :j do
+        data :R, UInt, 8
+        data :G, UInt, 8
+        data :B, UInt, 8
       end
     end
 
+    data :has_date, Flag, 1
+
+    # Condition statement
+    # * If you want check whether variable-name is valid, alternative expression
+    #     IF cond(:has_date){|v| v.on?} do ~ end
+    #   is also available.
+    IF E{ has_date.on? } do
+      data :date, MyDate, 31
+    end
+  end
+end
+```
 
 And then you can parse and read binay-data of MyImage as follows.
 
-    File.open('my_image.bin', 'rb') do |f|
-      image = MyImage.new(f.read)
-      print "Image size: #{image.height.to_i}x#{image.width.to_i}\n"
-      ul = image.i[0].j[0]
-      print "RGB color at the first is (#{ul.R.to_i}, #{ul.G.to_i}, #{ul.B.to_i})\n"
-      print "Image date: #{image.date.to_date}\n"
-    end
-
+```ruby
+File.open('my_image.bin', 'rb') do |f|
+  print "Image size: #{image.height}x#{image.width}\n"
+  ul = image.i[0].j[0]
+  print "RGB color at the first is (#{ul.R}, #{ul.G}, #{ul.B})\n"
+  print "Image date: #{image.date.to_date}\n"
+end
+```
 
 If 'my_image.bin' is binary-data-file of [0x02, 0x02, 0xe7,0x39,0x62, 0x00,0x00,0x00, 0xe7,0x39,0x62, 0x00,0x00,0x00, 0x9f, 0x78, 0x08, 0x03], 
 you can get output as follows.
@@ -161,62 +167,73 @@ you can get output as follows.
 
 For your information, you can dump all binary-data's information as follows.
 
-    File.open('my_image.bin', 'rb') do |f|
-      image = MyImage.new(f.read)
-      image.show(true)
-    end
-
+```ruby
+File.open('my_image.bin', 'rb') do |f|
+  image = MyImage.new(f.read)
+  image.show(true)
+end
+```
 
 ### Example 2  ###
 You can also define other structures as follows.
 
-    class DefExample < BinaryParser::TemplateBase
-      Def do
-        data :loop_byte_length, UInt, 8
+```ruby
+class DefExample < BinaryParser::TemplateBase
+  Def do
+    data :loop_byte_length, UInt, 8
 
-        # Loop until 'loop_byte_length' * 8 bits are parsed.
-        SPEND var(:loop_byte_length) * 8, :list do
-          data :length, UInt,   8
-          # Specifying length by neigbor value.
-          data :data,   Binary, var(:length) * 8
-        end
+    # Loop until 'loop_byte_length' * 8 bits are parsed.
+    SPEND var(:loop_byte_length) * 8, :list do
 
-        data :v1, UInt, 8
-        data :v2, UInt, 8
+      data :length, UInt,   8
 
-        # Number of Condition variables is arbitary. 
-        IF cond(:v1, :v2){|v1, v2| v1.to_i == v2.to_i} do
-          # +, -, *, / is available for var. (Order of [Integer op Variable] is NG.)
-          data :v3, UInt, (var(:v1) + var(:v2)) * 8
-        end
-      end
+      # You can specify length by neigbor value.
+      data :data,   Binary, var(:length) * 8
     end
+
+    data :v1, UInt, 8
+    data :v2, UInt, 8
+
+    # Number of Condition variables is arbitary. 
+    IF cond(:v1, :v2){|v1, v2| v1 == v2} do
+
+      # +, -, *, / is available to specify length with variable.
+      data :v3, UInt, 8 * (var(:v1) + var(:v2))
+    end
+  end
+end
+```
 
 Check this definition by giving some binary-data and calling show method as follows. 
 
-    i = DefExample.new([0x05, 0x01, 0xff, 0x02, 0xff, 0xff, 0x01, 0x01, 0x01, 0x01].pack("C*"))
-    i.show(true)
-
+```ruby
+i = DefExample.new([0x05, 0x01, 0xff, 0x02, 0xff, 0xff, 0x01, 0x01, 0x01, 0x01].pack("C*"))
+i.show(true)
+```
 
 ### Example 3  ###
 If you want to operate Stream-data, StreamTemplateBase class is useful. Define stream as follows.
 
-    class StreamExample < BinaryParser::StreamTemplateBase
-      # Stream which consists of every 4 byte binary-data.
-      Def(4) do
-        data :data1, UInt,   8
-        data :data2, Binary, 24
-      end
-    end
+```ruby
+class StreamExample < BinaryParser::StreamTemplateBase
+  # Stream which consists of every 4 byte binary-data.
+  Def(4) do
+    data :data1, UInt,   8
+    data :data2, Binary, 24
+  end
+end
+```
 
 And then, get structures from the stream as follows.
 
-    File.open('my_image.bin', 'rb') do |f|
-      stream = StreamExample.new(f)
-      packet = stream.get_next
-      puts "data1: #{packet.data1.to_i}, data2: #{packet.data2.to_s}"
-      stream.get_next.show(true)
-    end
+```ruby
+File.open('my_image.bin', 'rb') do |f|
+  stream = StreamExample.new(f)
+  packet = stream.get_next
+  puts "data1: #{packet.data1}, data2: #{packet.data2}"
+  stream.get_next.show(true)
+end
+```
 
 StreamTemplateBase has many useful methods to choose structures from the stream.
 If you want to know detail of these methods, please read documentation or concerned source-files.

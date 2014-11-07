@@ -228,8 +228,8 @@ module BinaryParser
             stack + [token.value]
           elsif token.is_a?(Expression::Token::Variable)
             eval_value = token_eval_proc.call(token)
-            unless eval_value.is_a?(Integer)
-              raise BadManipulationError, "Evaluation is faild. #{eval_value} is not Integer."
+            unless eval_value.is_a?(Integer) || eval_value.is_a?(::BinaryParser::BuiltInTemplate::UInt)
+              raise BadManipulationError, "Evaluation is faild. #{eval_value} is not Integer (or UInt) (#{eval_value.class})."
             end
             stack + [eval_value]
           end

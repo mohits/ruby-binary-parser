@@ -61,7 +61,7 @@ module BinaryParser
       unless @definition[name].conditions.all?{|cond| eval(cond, name)}
         return 0
       end
-      return eval(@definition[name].bit_length, name)
+      return eval(@definition[name].bit_length, name).to_i
     end
   
     def eval_entire_bit_length
@@ -86,7 +86,7 @@ module BinaryParser
           raise ParsingError, "Variable '#{token.symbol}' assigned  to Nil is referenced" +
             "at the time of resolving '#{name}'."
         end
-        val.to_i
+        val
       end
     end
     
