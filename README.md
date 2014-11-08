@@ -150,10 +150,11 @@ And then you can parse and read binay-data of MyImage as follows.
 
 ```ruby
 File.open('my_image.bin', 'rb') do |f|
-  print "Image size: #{image.height}x#{image.width}\n"
+  image = MyImage.new(f.read)
+  puts "Image size: #{image.height}x#{image.width}"
   ul = image.i[0].j[0]
-  print "RGB color at the first is (#{ul.R}, #{ul.G}, #{ul.B})\n"
-  print "Image date: #{image.date.to_date}\n"
+  puts "RGB color at the first is (#{ul.R}, #{ul.G}, #{ul.B})"
+  puts "Image date: #{image.date.to_date}"
 end
 ```
 
