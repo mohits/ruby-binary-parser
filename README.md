@@ -238,7 +238,7 @@ If you want to operate Stream-data, StreamTemplateBase class is useful. Define s
 
 ```ruby
 class StreamExample < BinaryParser::StreamTemplateBase
-  # Stream which consists of every 4 byte binary-data.
+  # Stream which consists of 4bytes-binary-datas.
   Def(4) do
     data :data1, UInt,   8
     data :data2, Binary, 24
