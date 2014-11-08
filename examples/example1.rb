@@ -31,7 +31,7 @@ class MyImage < BinaryParser::TemplateBase
     data :has_date, Flag, 1
 
     # Condition statement
-    # * If you want check whether variable-name is valid, alternative expression
+    # * If you want to check whether variable-name is valid, alternative expression
     #     IF cond(:has_date){|v| v.on?} do ~ end
     #   is also available.
     IF E{ has_date.on? } do
