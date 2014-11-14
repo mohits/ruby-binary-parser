@@ -5,7 +5,7 @@ module BinaryParser
   LIBRARY_ROOT_PATH = File.dirname(File.expand_path(File.dirname(__FILE__)))
 
   # load general class file
-  GENERAL_CLASS_DIR = '/lib/general_class/'
+  GENERAL_CLASS_DIR = '/lib/binary_parser/general_class/'
   GENERAL_CLASS_FILES =
     ['binary_manipulate_function.rb',
      'abstract_binary',
@@ -25,7 +25,7 @@ module BinaryParser
 
   # load built-in template file
   class TemplateBase; end
-  BUILT_IN_TEMPLATE_DIR = '/lib/built_in_template/'
+  BUILT_IN_TEMPLATE_DIR = '/lib/binary_parser/built_in_template/'
   BUILT_IN_TEMPLATE_FILES =
     ['uint.rb',
      'flag.rb',
@@ -38,7 +38,7 @@ module BinaryParser
   
 
   # load library main file
-  LIB_DIR = '/lib/'
+  LIB_DIR = '/lib/binary_parser/'
   LIB_FILES =
     ['loop_list.rb',
      'while_list.rb',
