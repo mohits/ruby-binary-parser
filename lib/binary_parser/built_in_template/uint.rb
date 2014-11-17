@@ -5,7 +5,7 @@ module BinaryParser
       include Comparable
 
       def content_description
-        self.to_i.to_s
+        "#{self.to_i.to_s} (0x#{self.to_i.to_s(16)})"
       end
 
       def to_s(base=10)
