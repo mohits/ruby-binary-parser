@@ -4,6 +4,10 @@ module BinaryParser
       def to_i
         entity.to_i
       end
+
+      def names
+        []
+      end
     end
     
     class UInt8 < UIntN
