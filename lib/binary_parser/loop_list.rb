@@ -44,7 +44,11 @@ module BinaryParser
     #   out         => Print target. Default is STDOUT.
     def show(recursively=false, out=STDOUT, depth=0)
       @list.each_with_index do |element, i|
-        out.puts sprintf(" " * (depth * 2) + "%-5s", "[#{i}]")
+        out.puts sprintf(" " * (depth * 2) + "%-5s::%20s  Len: %s Cont: %s",
+                         "[#{i}]",
+                         element.class.name ? element.class.name.split("::").last : "AnonymouseTemplate",
+                         element.structure_bit_length,
+                         element.content_description)
         element.show(true, out, depth + 1) if recursively
       end
     end
