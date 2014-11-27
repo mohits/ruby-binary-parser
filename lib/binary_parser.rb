@@ -29,7 +29,8 @@ module BinaryParser
   BUILT_IN_TEMPLATE_FILES =
     ['uint.rb',
      'flag.rb',
-     'binary.rb'
+     'binary.rb',
+
     ]
 
   BUILT_IN_TEMPLATE_FILES.each do |path|
@@ -59,6 +60,7 @@ module BinaryParser
   SUB_BUILT_IN_TEMPLATE_FILES =
     [
      'uint_n.rb',
+     'bcd.rb',
     ]
 
   SUB_BUILT_IN_TEMPLATE_FILES.each do |path|

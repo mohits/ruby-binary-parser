@@ -9,6 +9,12 @@ module BinaryParser
         []
       end
     end
+
+    class UInt4 < UIntN
+      Def do
+        data :entity, UInt, 4
+      end
+    end
     
     class UInt8 < UIntN
       Def do
