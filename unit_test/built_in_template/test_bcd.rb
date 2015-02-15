@@ -12,9 +12,9 @@ module BinaryParser
       
       class TestingTemplate < TemplateBase
         def_structure do
-          data :n1, BCD[0], 16
-          data :n2, BCD[1], 16
-          data :n3, BCD[5], 32
+          data :n1, BCD, 16
+          data :n2, BCD_f1, 16
+          data :n3, BCD_f5, 32
         end
       end
 

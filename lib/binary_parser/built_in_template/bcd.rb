@@ -1,9 +1,6 @@
 module BinaryParser
   module BuiltInTemplate
-
-    BCD = Object.new
-
-    def BCD.[](floating_point)
+    def self.bcd_make(floating_point)
       klass = Class.new(TemplateBase) do
         Def do
           SPEND rest, :decimals, UInt4
@@ -38,5 +35,18 @@ module BinaryParser
       klass.instance_variable_set(:@floating_point, floating_point)
       return klass
     end
+
+
+    BCD = bcd_make(0)
+    BCD_f1 = bcd_make(1)
+    BCD_f2 = bcd_make(2)
+    BCD_f3 = bcd_make(3)
+    BCD_f4 = bcd_make(4)
+    BCD_f5 = bcd_make(5)
+    BCD_f6 = bcd_make(6)
+    BCD_f7 = bcd_make(7)
+    BCD_f8 = bcd_make(8)
+    BCD_f9 = bcd_make(9)
+    BCD_f10 = bcd_make(10)
   end
 end
