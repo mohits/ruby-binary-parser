@@ -86,6 +86,22 @@ module BinaryParser
       return binary
     end
 
+    # Take n elements from stream. Behave like calling #get_next n times.
+    # Special cases:
+    #  (1) If n elements do NOT exist in stream (only m elements exist), 
+    #      this method take m (< n) elements from stream.
+    def read(n)
+      res = []
+      n.times do
+        if rest?
+          res << get_next
+        else
+          break
+        end
+      end
+      return res
+    end
+
     # Remove elements until finding element which fullfils proc-condition or reaching end of stream.
     # return: array of removed elements
     #
@@ -147,6 +163,14 @@ module BinaryParser
     # Check whether binary-stream remains or not.
     def rest?
       non_proceed_get_next
+    end
+
+    def eof?
+      !rest?
+    end
+
+    def eof
+      eof?
     end
       
     # Simply close binary-stream.

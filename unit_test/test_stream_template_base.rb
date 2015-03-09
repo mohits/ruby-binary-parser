@@ -69,6 +69,24 @@ module BinaryParser
         d4 = st.get_next
         assert_equal(nil, d4)
       end
+
+      def test_read
+        st = gen_stream(1, 2, 3,
+                        4, 5, 6,
+                        7, 8, 9)
+
+        ss = st.read(2)
+        assert_equal(2, ss.length)
+        assert_equal(1, ss[0].id.to_i)
+        assert_equal(4, ss[1].id.to_i)
+        
+        ss = st.read(2)
+        assert_equal(1, ss.length)
+        assert_equal(7, ss[0].id.to_i)
+
+        ss = st.read(2)
+        assert_equal(0, ss.length)
+      end
       
       def test_seek_top_POPULAR_CASE
         st = gen_stream(1, 0, 0,
